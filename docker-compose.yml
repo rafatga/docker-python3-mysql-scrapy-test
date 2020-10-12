@@ -1,0 +1,55 @@
+version: "3.7"
+# docker-compose up
+# docker stop $(docker ps -aq)
+# docker rm $(docker ps -aq)
+# docker rmi $(docker ps -aq) 
+# docker build -t myblog .
+# docker run -d --name myblogcontainer -p 80:80 -v $(pwd)/app:/app -e FLASK_APP=main.py -e FLASK_DEBUG=1 myblog flask run --host=0.0.0.0 --port=80
+services:
+
+  #flask - Service
+  app:
+    container_name: myblog_docker_webserver
+    restart: always
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ./app:/app
+    environment:
+      - FLASK_APP=main.py
+      - FLASK_DEBUG=1
+      - 'RUN=flask run --host=0.0.0.0 --port=80'
+    command: flask run --host=0.0.0.0 --port=80  
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+
+  #Mysql Service
+  db:
+    container_name: myblog_docker_db
+    image: mysql:8.0.19
+    command: '--default-authentication-plugin=mysql_native_password'
+    restart: always
+    ports:
+      - 3306:3306
+    networks:
+      - app-network
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db-data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=demo
+      - MYSQL_DATABASE=myblog
+      - MYSQL_USER=foo2020
+      - MYSQL_PASSWORD=demo
+
+volumes:
+  db-data:
+
+networks:
+  app-network:
